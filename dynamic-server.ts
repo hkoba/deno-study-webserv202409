@@ -1,3 +1,5 @@
+import * as esbuild from "npm:esbuild";
+
 const scriptFn = "./dynamic-content.ts"
 
 type CacheEntry = {
@@ -31,8 +33,20 @@ async function readFile(file: Deno.FsFile): Promise<string> {
     const buf = new Uint8Array(100)
     readBytes = await file.read(buf)
     console.log("readBytes: ", readBytes)
-    result += new TextDecoder().decode(buf)
+    if (readBytes) {
+      const read = new TextDecoder().decode(buf)
+      result += read.substring(0, readBytes)
+      const pos = result.indexOf("\x00")
+      if (pos >= 0) {
+        console.log(result)
+        console.log("NUL pos: ", pos)
+      }
+    }
   } while (readBytes)
+  const pos = result.indexOf("\x00")
+  if (pos >= 0) {
+    throw new Error("result contains NUL byte!")
+  }
   return result
 }
 
@@ -46,7 +60,10 @@ async function loadContent(fn: string): Promise<CacheEntry> {
   }
   const mtime = fi.mtime
   // ここで typescript 変換を掛けないと！
-  const handler = await import(`data:,${content}`)
+  const output = await esbuild.transform(content, {loader: 'ts'})
+  await esbuild.stop()
+  console.log("transpiled js:", output)
+  const handler = await import(`data:,${output.code}`)
   console.log("loaded: ", handler)
   return {handler, mtime}
 }
