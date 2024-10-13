@@ -34,8 +34,8 @@ async function readFile(file: Deno.FsFile): Promise<string> {
     readBytes = await file.read(buf)
     console.log("readBytes: ", readBytes)
     if (readBytes) {
-      const read = new TextDecoder().decode(buf)
-      result += read.substring(0, readBytes)
+      const read = new TextDecoder().decode(buf.subarray(0, readBytes))
+      result += read
       const pos = result.indexOf("\x00")
       if (pos >= 0) {
         console.log(result)
