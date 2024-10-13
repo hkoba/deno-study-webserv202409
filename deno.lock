@@ -1,7 +1,13 @@
 {
   "version": "4",
   "specifiers": {
+    "jsr:@hikyu/colors@*": "0.1.11",
     "npm:esbuild@*": "0.24.0"
+  },
+  "jsr": {
+    "@hikyu/colors@0.1.11": {
+      "integrity": "e5ec6e5e900e6f28f91b19ff7c66d2625620925100e51ac8fca04265a519dc27"
+    }
   },
   "npm": {
     "@esbuild/aix-ppc64@0.24.0": {
