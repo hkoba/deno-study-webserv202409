@@ -20,7 +20,8 @@ for (const path of restSearch) {
     const dh = dhmap.map.get(location)
     console.log(`found for ${path}: `, dh)
   } else {
-    console.log(`found for ${path}: `)
+    console.log(`Not found for ${path}: `)
+    // dhmap.map.get("/") === root を使うケース
   }
 }
 
@@ -66,6 +67,7 @@ async function createDirHandlerMap(path: string) {
     dirHandlerMap.set(location, entry)
   }
 
+  // パターンには subdir だけを入れる(root / は必ずマッチするので無意味)
   const pathItems = []
   for (const path of Array.from(dirHandlerMap.keys())
     .filter((k) => k !== "/")
