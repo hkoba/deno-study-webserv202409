@@ -53,17 +53,38 @@ async function readFile(file: Deno.FsFile): Promise<string> {
 async function loadContent(fn: string): Promise<CacheEntry> {
   const fh = await Deno.open(fn)
   const content = await readFile(fh)
-  console.log("pure content:", content)
+  console.log(`pure content: [[${content}]]`)
   const fi = await fh.stat()
   if (!fi || !fi.mtime) {
     throw new Error(`file changed during read`)
   }
   const mtime = fi.mtime
   // ここで typescript 変換を掛けないと！
-  const output = await esbuild.transform(content, {loader: 'ts'})
+  const output = await esbuild.build({
+    stdin: {
+      contents: content,
+      sourcefile: fn,
+      resolveDir: "./",
+      loader: 'ts'
+    },
+    format: 'esm',
+    platform: 'neutral',
+    write: false,
+    bundle: true
+  })
   await esbuild.stop()
-  console.log("transpiled js:", output)
-  const handler = await import(`data:,${output.code}`)
+  console.log("transpiled js: ", output)
+  let script = ""
+  for (const out of output.outputFiles) {
+    const s = new TextDecoder()
+      .decode(out.contents)
+      .replaceAll(/^\/\/[^\n]*\n/mg, "")
+    console.log(`file ${out.path}: [[${s}]]`)
+    script += s
+
+  }
+  console.log(`ALL[[${script}]]`)
+  const handler = await import(`data:text/javascript,${script}`)
   console.log("loaded: ", handler)
   return {handler, mtime}
 }
