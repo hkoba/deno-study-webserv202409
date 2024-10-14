@@ -1,7 +1,7 @@
 
 import { walk, type WalkEntry } from "jsr:@std/fs/walk"
 
-import { normalize } from "jsr:@std/path"
+import { resolve } from "jsr:@std/path"
 
 if (! Deno.args.length) {
   throw new Error(`Usage: ${Deno.mainModule} DIRECTORY`)
@@ -25,6 +25,17 @@ for (const path of restSearch) {
   }
 }
 
+const watchList = Array.from(dhmap.map.keys())
+  .map((k) => dhmap.root + k)
+
+console.log(`rootDir: [[${dhmap.root}]] `, "watchList: ", watchList)
+
+for await (const ev of Deno.watchFs(watchList, {recursive: false})) {
+  // kind: create, modify, access, remove
+  // paths:
+  console.log(ev)
+}
+
 // URL.pathname で match させたい. named を使いたい
 // entry を作りたい
 // 親が名前で引けると嬉しい、かも？
@@ -34,7 +45,7 @@ async function createDirHandlerMap(path: string) {
   if (! fi.isDirectory)
     throw new Error(`path should be a directory!`)
 
-  const rootDir = normalize(path).replace(/[/\\]+$/, "")
+  const rootDir = resolve(Deno.cwd(), path).replace(/[/\\]+$/, "")
 
   const [_, ...subDirs] = await Array.fromAsync(
     walk(rootDir, {
@@ -78,7 +89,7 @@ async function createDirHandlerMap(path: string) {
 
   console.log(pattern)
 
-  return {map: dirHandlerMap, pattern}
+  return {root: rootDir, map: dirHandlerMap, pattern}
 }
 
 function list_subdirs(rootDir: string, subDirs: WalkEntry[]) {
